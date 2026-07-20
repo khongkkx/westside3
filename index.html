@@ -87,6 +87,12 @@
   .lcGalleryDots span{width:6px;height:6px;border-radius:50%;background:#d0dae4;cursor:pointer;}
   .lcGalleryDots span.on{background:var(--clay);}
   .lcGalleryCount{position:absolute;bottom:6px;right:8px;font-size:9px;color:#fff;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:10px;}
+  #lightboxBg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;cursor:zoom-out;}
+  #lightboxBg.open{display:flex;}
+  #lightboxImg{max-width:92vw;max-height:88vh;border-radius:10px;object-fit:contain;box-shadow:0 8px 48px rgba(0,0,0,.6);}
+  #lightboxClose{position:absolute;top:16px;right:20px;color:#fff;font-size:28px;background:none;border:none;cursor:pointer;line-height:1;}
+  .lcPhotoPanel>img{cursor:zoom-in;}
+  .lcGallery img{cursor:zoom-in;}
   #sidebarToggle{position:fixed;top:calc(12px + var(--safe-top));left:calc(12px + var(--safe-left));z-index:30;display:none;background:var(--paper);border:1px solid #d0dae4;border-radius:10px;padding:7px 11px;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(30,40,50,.13);}
   #compass{position:fixed;top:calc(16px + var(--safe-top));right:calc(16px + var(--safe-right));z-index:10;width:34px;height:34px;background:rgba(248,251,253,.88);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #d0dae4;font-size:10px;font-weight:700;color:var(--clay);}
   #needle{will-change:transform;}
@@ -352,6 +358,9 @@
 </div>
 <button id="exitView">Exit unit view</button>
 <div id="err">Couldn't load the 3D engine. Check your connection and reopen this file.</div>
+
+<!-- Lightbox -->
+<div id="lightboxBg"><button id="lightboxClose">✕</button><img id="lightboxImg" src="" alt=""></div>
 
 <!-- Add Listing Modal -->
 <div id="listingModalBg">
@@ -1595,6 +1604,7 @@ function renderListings(sheetRows){
       const photoPanel=document.createElement('div');photoPanel.className='lcPhotoPanel';
       if(photos.length===1){
         const img=document.createElement('img');img.src=photos[0];img.alt='Unit photo';
+        img.addEventListener('click',()=>openLightbox(photos[0]));
         photoPanel.appendChild(img);
       } else {
         let cur=0;
@@ -1606,6 +1616,7 @@ function renderListings(sheetRows){
         gallery.appendChild(img);gallery.appendChild(prev);gallery.appendChild(next);gallery.appendChild(count);
         const dots=document.createElement('div');dots.className='lcGalleryDots';
         photos.forEach((_,i)=>{const d=document.createElement('span');if(i===0)d.className='on';d.addEventListener('click',()=>go(i));dots.appendChild(d);});
+        img.addEventListener('click',()=>openLightbox(photos[cur]));
         function go(n){cur=(n+photos.length)%photos.length;img.src=photos[cur];count.textContent=`${cur+1} / ${photos.length}`;dots.querySelectorAll('span').forEach((d,i)=>d.className=i===cur?'on':'');}
         prev.addEventListener('click',e=>{e.stopPropagation();go(cur-1);});
         next.addEventListener('click',e=>{e.stopPropagation();go(cur+1);});
@@ -1651,6 +1662,13 @@ function fetchAndRender(){
   }).catch(()=>renderListings([]));
 }
 fetchAndRender();
+
+/* ===== LIGHTBOX ===== */
+const lbBg=document.getElementById('lightboxBg');
+const lbImg=document.getElementById('lightboxImg');
+document.getElementById('lightboxClose').addEventListener('click',()=>lbBg.classList.remove('open'));
+lbBg.addEventListener('click',e=>{if(e.target===lbBg)lbBg.classList.remove('open');});
+function openLightbox(src){lbImg.src=src;lbBg.classList.add('open');}
 
 /* ===== ADD LISTING MODAL ===== */
 const modalBg=document.getElementById('listingModalBg');
