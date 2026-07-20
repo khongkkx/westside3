@@ -1563,9 +1563,34 @@ updateToggleVis();
 /* ===== LIGHTBOX ===== */
 const lbBg=document.getElementById('lightboxBg');
 const lbImg=document.getElementById('lightboxImg');
+let lbPhotos=[],lbIdx=0;
 document.getElementById('lightboxClose').addEventListener('click',()=>lbBg.classList.remove('open'));
 lbBg.addEventListener('click',e=>{if(e.target===lbBg)lbBg.classList.remove('open');});
-function openLightbox(src){lbImg.src=src;lbBg.classList.add('open');}
+function openLightbox(photos,idx){
+  lbPhotos=photos;lbIdx=idx||0;
+  lbImg.src=lbPhotos[lbIdx];lbBg.classList.add('open');
+  updateLbCount();
+}
+function lbGo(n){lbIdx=(n+lbPhotos.length)%lbPhotos.length;lbImg.src=lbPhotos[lbIdx];updateLbCount();}
+function updateLbCount(){
+  let c=document.getElementById('lbCount');
+  if(lbPhotos.length>1){if(!c){c=document.createElement('div');c.id='lbCount';c.style.cssText='position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;background:rgba(0,0,0,.5);padding:3px 10px;border-radius:20px;';lbBg.appendChild(c);}c.textContent=`${lbIdx+1} / ${lbPhotos.length}`;}
+  else if(c)c.remove();
+  let pp=document.getElementById('lbPrev'),np=document.getElementById('lbNext');
+  if(lbPhotos.length>1){
+    if(!pp){pp=document.createElement('button');pp.id='lbPrev';pp.textContent='‹';pp.style.cssText='position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:36px;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:6px;padding:4px 14px;cursor:pointer;';pp.addEventListener('click',e=>{e.stopPropagation();lbGo(lbIdx-1);});lbBg.appendChild(pp);}
+    if(!np){np=document.createElement('button');np.id='lbNext';np.textContent='›';np.style.cssText='position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:6px;padding:4px 14px;cursor:pointer;';np.addEventListener('click',e=>{e.stopPropagation();lbGo(lbIdx+1);});lbBg.appendChild(np);}
+    pp.style.display=np.style.display='block';
+  } else {
+    if(pp)pp.style.display='none';if(np)np.style.display='none';
+  }
+}
+// Swipe support
+let lbTX=0;
+lbBg.addEventListener('touchstart',e=>{lbTX=e.touches[0].clientX;},{passive:true});
+lbBg.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-lbTX;if(Math.abs(dx)>40)lbGo(dx<0?lbIdx+1:lbIdx-1);},{passive:true});
+// Keyboard
+document.addEventListener('keydown',e=>{if(!lbBg.classList.contains('open'))return;if(e.key==='ArrowLeft')lbGo(lbIdx-1);if(e.key==='ArrowRight')lbGo(lbIdx+1);if(e.key==='Escape')lbBg.classList.remove('open');});
 
 /* ===== GOOGLE SHEETS LISTINGS ===== */
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1LElJW3DfqzhPq-3V1Zm_ydWQlF3-QTesHTz3zRuVBzwJc1KIM0kjCBHv0dq2-c3gXh-MT-LxxkD9/pub?gid=0&single=true&output=csv';
@@ -1611,7 +1636,7 @@ function renderListings(sheetRows){
       const photoPanel=document.createElement('div');photoPanel.className='lcPhotoPanel';
       if(photos.length===1){
         const img=document.createElement('img');img.src=photos[0];img.alt='Unit photo';
-        img.addEventListener('click',()=>openLightbox(photos[0]));
+        img.addEventListener('click',()=>openLightbox(photos,0));
         photoPanel.appendChild(img);
       } else {
         let cur=0;
@@ -1623,7 +1648,7 @@ function renderListings(sheetRows){
         gallery.appendChild(img);gallery.appendChild(prev);gallery.appendChild(next);gallery.appendChild(count);
         const dots=document.createElement('div');dots.className='lcGalleryDots';
         photos.forEach((_,i)=>{const d=document.createElement('span');if(i===0)d.className='on';d.addEventListener('click',()=>go(i));dots.appendChild(d);});
-        img.addEventListener('click',()=>openLightbox(photos[cur]));
+        img.addEventListener('click',()=>openLightbox(photos,cur));
         function go(n){cur=(n+photos.length)%photos.length;img.src=photos[cur];count.textContent=`${cur+1} / ${photos.length}`;dots.querySelectorAll('span').forEach((d,i)=>d.className=i===cur?'on':'');}
         prev.addEventListener('click',e=>{e.stopPropagation();go(cur-1);});
         next.addEventListener('click',e=>{e.stopPropagation();go(cur+1);});
