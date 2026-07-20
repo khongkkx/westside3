@@ -76,7 +76,16 @@
   .lcExpandBtn.open .lcExpandChev{transform:rotate(180deg);}
   .lcPhotoPanel{display:none;margin-top:8px;}
   .lcPhotoPanel.open{display:block;}
-  .lcPhotoPanel img{width:100%;border-radius:7px;display:block;}
+  .lcGallery{position:relative;width:100%;border-radius:7px;overflow:hidden;background:#000;}
+  .lcGallery img{width:100%;display:block;border-radius:7px;object-fit:cover;}
+  .lcGalleryNav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:none;font-size:16px;padding:4px 9px;cursor:pointer;border-radius:4px;z-index:2;}
+  .lcGalleryNav:hover{background:rgba(0,0,0,.7);}
+  .lcGalleryPrev{left:4px;}
+  .lcGalleryNext{right:4px;}
+  .lcGalleryDots{display:flex;justify-content:center;gap:5px;margin-top:5px;}
+  .lcGalleryDots span{width:6px;height:6px;border-radius:50%;background:#d0dae4;cursor:pointer;}
+  .lcGalleryDots span.on{background:var(--clay);}
+  .lcGalleryCount{position:absolute;bottom:6px;right:8px;font-size:9px;color:#fff;background:rgba(0,0,0,.45);padding:2px 6px;border-radius:10px;}
   #sidebarToggle{position:fixed;top:calc(12px + var(--safe-top));left:calc(12px + var(--safe-left));z-index:30;display:none;background:var(--paper);border:1px solid #d0dae4;border-radius:10px;padding:7px 11px;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(30,40,50,.13);}
   #compass{position:fixed;top:calc(16px + var(--safe-top));right:calc(16px + var(--safe-right));z-index:10;width:34px;height:34px;background:rgba(248,251,253,.88);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #d0dae4;font-size:10px;font-weight:700;color:var(--clay);}
   #needle{will-change:transform;}
@@ -1579,11 +1588,28 @@ function renderListings(sheetRows){
     clickArea.addEventListener('click',()=>{if(parsed)jumpToUnit(parsed.lvl,parsed.stack);});
     card.appendChild(clickArea);
     if(r.photo){
+      const photos=r.photo.split('|').map(s=>s.trim()).filter(Boolean);
       const expBtn=document.createElement('button');expBtn.className='lcExpandBtn';
-      expBtn.innerHTML='📷 View photo <span class="lcExpandChev">▼</span>';
+      expBtn.innerHTML=`📷 ${photos.length>1?photos.length+' photos':'View photo'} <span class="lcExpandChev">▼</span>`;
       const photoPanel=document.createElement('div');photoPanel.className='lcPhotoPanel';
-      const img=document.createElement('img');img.src=r.photo;img.alt='Unit photo';
-      photoPanel.appendChild(img);
+      if(photos.length===1){
+        const img=document.createElement('img');img.src=photos[0];img.alt='Unit photo';
+        photoPanel.appendChild(img);
+      } else {
+        let cur=0;
+        const gallery=document.createElement('div');gallery.className='lcGallery';
+        const img=document.createElement('img');img.src=photos[0];img.alt='Unit photo';
+        const prev=document.createElement('button');prev.className='lcGalleryNav lcGalleryPrev';prev.textContent='‹';
+        const next=document.createElement('button');next.className='lcGalleryNav lcGalleryNext';next.textContent='›';
+        const count=document.createElement('div');count.className='lcGalleryCount';count.textContent=`1 / ${photos.length}`;
+        gallery.appendChild(img);gallery.appendChild(prev);gallery.appendChild(next);gallery.appendChild(count);
+        const dots=document.createElement('div');dots.className='lcGalleryDots';
+        photos.forEach((_,i)=>{const d=document.createElement('span');if(i===0)d.className='on';d.addEventListener('click',()=>go(i));dots.appendChild(d);});
+        function go(n){cur=(n+photos.length)%photos.length;img.src=photos[cur];count.textContent=`${cur+1} / ${photos.length}`;dots.querySelectorAll('span').forEach((d,i)=>d.className=i===cur?'on':'');}
+        prev.addEventListener('click',e=>{e.stopPropagation();go(cur-1);});
+        next.addEventListener('click',e=>{e.stopPropagation();go(cur+1);});
+        photoPanel.appendChild(gallery);photoPanel.appendChild(dots);
+      }
       expBtn.addEventListener('click',()=>{
         const open=expBtn.classList.toggle('open');
         photoPanel.classList.toggle('open',open);
