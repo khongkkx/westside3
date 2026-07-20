@@ -1560,6 +1560,13 @@ togBtn.addEventListener('click',toggleSidebar);
 headTogBtn.addEventListener('click',toggleSidebar);
 updateToggleVis();
 
+/* ===== LIGHTBOX ===== */
+const lbBg=document.getElementById('lightboxBg');
+const lbImg=document.getElementById('lightboxImg');
+document.getElementById('lightboxClose').addEventListener('click',()=>lbBg.classList.remove('open'));
+lbBg.addEventListener('click',e=>{if(e.target===lbBg)lbBg.classList.remove('open');});
+function openLightbox(src){lbImg.src=src;lbBg.classList.add('open');}
+
 /* ===== GOOGLE SHEETS LISTINGS ===== */
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vR1LElJW3DfqzhPq-3V1Zm_ydWQlF3-QTesHTz3zRuVBzwJc1KIM0kjCBHv0dq2-c3gXh-MT-LxxkD9/pub?gid=0&single=true&output=csv';
 function parseUnitCode(code){
@@ -1662,13 +1669,6 @@ function fetchAndRender(){
   }).catch(()=>renderListings([]));
 }
 fetchAndRender();
-
-/* ===== LIGHTBOX ===== */
-const lbBg=document.getElementById('lightboxBg');
-const lbImg=document.getElementById('lightboxImg');
-document.getElementById('lightboxClose').addEventListener('click',()=>lbBg.classList.remove('open'));
-lbBg.addEventListener('click',e=>{if(e.target===lbBg)lbBg.classList.remove('open');});
-function openLightbox(src){lbImg.src=src;lbBg.classList.add('open');}
 
 /* ===== ADD LISTING MODAL ===== */
 const modalBg=document.getElementById('listingModalBg');
